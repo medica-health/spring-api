@@ -12,14 +12,24 @@ spring:
     mongodb:
       uri: ${MONGO_URI:mongodb://localhost:27017/cdac_db}
 
-  # PostgreSQL - relational data (JPA / Hibernate)
+  # PostgreSQL (+ PostGIS) - main database. This service owns the `auth` schema.
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/cdac_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
+
+  # Flyway creates and migrates the `auth` schema (src/main/resources/db/migration).
+  # express-api's `app` schema references auth.users, so this must run first.
+  flyway:
+    enabled: true
+    schemas: auth
+    default-schema: auth
+    locations: classpath:db/migration
+
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:update}
+      # Schema changes go through Flyway; Hibernate only checks the mapping.
+      ddl-auto: ${JPA_DDL_AUTO:validate}
     open-in-view: false
     properties:
       hibernate:
@@ -28,6 +38,29 @@ spring:
 app:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+  # JWT contract shared with express-api: HS256 over JWT_SECRET,
+  # claims sub (user id), email, name, role, iss, aud, iat, exp.
+  jwt:
+    secret: ${JWT_SECRET:}
+    issuer: ${JWT_ISSUER:cdac-auth}
+    audience: ${JWT_AUDIENCE:cdac-api}
+    access-token-ttl: ${JWT_ACCESS_TTL:15m}
+    refresh-token-ttl: ${JWT_REFRESH_TTL:7d}
+
+  # Transactional email via Resend (password reset, email verification). See mail/ResendMailService.
+  # Empty api-key -> emails are logged instead of sent (local dev).
+  mail:
+    resend-api-key: ${RESEND_API_KEY:}
+    from: ${MAIL_FROM:MediCare <onboarding@resend.dev>}
+    reply-to: ${MAIL_REPLY_TO:}
+    # Base URL of the web app, for links in emails (reset password, verify email)
+    app-base-url: ${APP_BASE_URL:http://localhost:3000}
+
+  # First-boot admin account (created only if no ADMIN exists). See config/AdminSeeder.
+  seed-admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
 
 management:
   endpoints:
