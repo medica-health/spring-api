@@ -7,7 +7,7 @@ import com.cdac.api.model.User;
 import com.cdac.api.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -37,7 +37,12 @@ public class PhonePatientService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
+    /**
+     * Not @Transactional on purpose: the insert commits inside saveAndFlush's own transaction, so a
+     * unique-email violation from a concurrent request with the same key surfaces here, where we can
+     * re-read the winner. A replay with the same key returns the original user even if the
+     * name/phone differ (CallSid semantics).
+     */
     public Result create(CreatePhonePatientRequest req) {
         String email = "p-" + sha256Hex(req.idempotencyKey()).substring(0, 24) + EMAIL_DOMAIN;
 
@@ -57,7 +62,13 @@ public class PhonePatientService {
         user.setRole(Role.PATIENT);
         user.setEnabled(true);
         user.setEmailVerified(false);
-        return new Result(toResponse(users.save(user)), true);
+        try {
+            return new Result(toResponse(users.saveAndFlush(user)), true);
+        } catch (DataIntegrityViolationException e) {
+            return users.findByEmail(email)
+                    .map(u -> new Result(toResponse(u), false))
+                    .orElseThrow(() -> e);
+        }
     }
 
     private static PhonePatientResponse toResponse(User u) {

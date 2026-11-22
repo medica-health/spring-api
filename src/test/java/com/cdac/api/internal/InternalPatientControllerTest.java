@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.endsWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -43,6 +44,17 @@ class InternalPatientControllerTest {
         mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(BODY))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false));
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void badKeyWithInvalidBodyIs401() throws Exception {
+        mockMvc.perform(post(URL).header("X-Api-Key", "nope")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"fullName\":\"\",\"phoneE164\":\"12345\",\"idempotencyKey\":\"\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false));
+        verifyNoInteractions(service);
     }
 
     @Test
@@ -51,6 +63,7 @@ class InternalPatientControllerTest {
                         .contentType(MediaType.APPLICATION_JSON).content(BODY))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false));
+        verifyNoInteractions(service);
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.cdac.api.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -30,7 +31,7 @@ class PhonePatientServiceTest {
     void setUp() {
         users = mock(UserRepository.class);
         service = new PhonePatientService(users, encoder);
-        when(users.save(any(User.class))).thenAnswer(inv -> {
+        when(users.saveAndFlush(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             u.setId(UUID.randomUUID());
             return u;
@@ -45,7 +46,7 @@ class PhonePatientServiceTest {
 
         assertThat(result.created()).isTrue();
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(users).save(captor.capture());
+        verify(users).saveAndFlush(captor.capture());
         User saved = captor.getValue();
         assertThat(saved.getRole()).isEqualTo(Role.PATIENT);
         assertThat(saved.getPhone()).isEqualTo("+919876543210");
@@ -69,7 +70,22 @@ class PhonePatientServiceTest {
 
         assertThat(result.created()).isFalse();
         assertThat(result.response().id()).isEqualTo(existing.getId());
-        verify(users, never()).save(any());
+        verify(users, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void concurrentInsertWithSameKeyReturnsWinnerAsReplay() {
+        User winner = new User();
+        winner.setId(UUID.randomUUID());
+        winner.setEmail("p-w@phone.medicare.invalid");
+        winner.setFullName("Asha Rao");
+        when(users.findByEmail(any())).thenReturn(Optional.empty(), Optional.of(winner));
+        when(users.saveAndFlush(any(User.class))).thenThrow(new DataIntegrityViolationException("dup email"));
+
+        var result = service.create(new CreatePhonePatientRequest("Asha Rao", "+919876543210", "CA123"));
+
+        assertThat(result.created()).isFalse();
+        assertThat(result.response().id()).isEqualTo(winner.getId());
     }
 
     @Test
@@ -80,6 +96,6 @@ class PhonePatientServiceTest {
         var result = service.create(new CreatePhonePatientRequest("Other Person", "+919876543210", "CA999"));
 
         assertThat(result.created()).isTrue();
-        verify(users).save(any(User.class));
+        verify(users).saveAndFlush(any(User.class));
     }
 }
