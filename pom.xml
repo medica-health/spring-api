@@ -64,11 +64,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
 		</dependency>
-		<!-- Password reset and email verification emails -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
-		</dependency>
 		<!-- Owns the `auth` schema: src/main/resources/db/migration -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

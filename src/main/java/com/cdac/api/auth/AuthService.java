@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
  *
  * <p>Collaborators: {@code UserRepository}, {@code RefreshTokenRepository},
  * {@code PasswordResetTokenRepository}, {@code EmailVerificationTokenRepository},
- * {@code PasswordEncoder} (BCrypt, from SecurityConfig), {@code JwtService} and a small
- * {@code AuthMailService} wrapping {@code JavaMailSender}. Send mail after the transaction
+ * {@code PasswordEncoder} (BCrypt, from SecurityConfig), {@code JwtService} and
+ * {@code mail.ResendMailService} (Resend HTTP API). Send mail after the transaction
  * commits, and never let a mail failure fail the request.
  *
  * <h2>TODO methods (all {@code @Transactional})</h2>

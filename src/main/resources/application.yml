@@ -35,13 +35,6 @@ spring:
       hibernate:
         format_sql: true
 
-  # Outgoing email (password reset, email verification). Mailpit locally.
-  mail:
-    host: ${SMTP_HOST:localhost}
-    port: ${SMTP_PORT:1025}
-    username: ${SMTP_USER:}
-    password: ${SMTP_PASSWORD:}
-
 app:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
@@ -55,8 +48,12 @@ app:
     access-token-ttl: ${JWT_ACCESS_TTL:15m}
     refresh-token-ttl: ${JWT_REFRESH_TTL:7d}
 
+  # Transactional email via Resend (password reset, email verification). See mail/ResendMailService.
+  # Empty api-key -> emails are logged instead of sent (local dev).
   mail:
-    from: ${MAIL_FROM:MediCare <no-reply@cdac.local>}
+    resend-api-key: ${RESEND_API_KEY:}
+    from: ${MAIL_FROM:MediCare <onboarding@resend.dev>}
+    reply-to: ${MAIL_REPLY_TO:}
     # Base URL of the web app, for links in emails (reset password, verify email)
     app-base-url: ${APP_BASE_URL:http://localhost:3000}
 
