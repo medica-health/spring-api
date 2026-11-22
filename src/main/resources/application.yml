@@ -1,0 +1,39 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: spring-api
+  profiles:
+    active: ${APP_ENV:development}
+
+  # MongoDB - document data
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/cdac_db}
+
+  # PostgreSQL - relational data (JPA / Hibernate)
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cdac_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+app:
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
