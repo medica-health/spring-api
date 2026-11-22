@@ -39,6 +39,11 @@ app:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
 
+  # Shared secret for service-to-service endpoints (/api/internal/**), sent as X-Api-Key.
+  # Empty -> those endpoints answer 503 (disabled).
+  internal:
+    api-key: ${API_KEY:}
+
   # JWT contract shared with express-api: HS256 over JWT_SECRET,
   # claims sub (user id), email, name, role, iss, aud, iat, exp.
   jwt:
