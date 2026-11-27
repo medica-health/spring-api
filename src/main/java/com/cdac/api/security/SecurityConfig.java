@@ -46,7 +46,11 @@ public class SecurityConfig {
                 .formLogin(f -> f.disable())
                 .logout(l -> l.disable())
                 // TODO: replace with the rules listed in the class Javadoc.
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+                .authorizeHttpRequests(auth -> auth
+                        // Service-to-service routes: guarded by the API-key interceptor
+                        // (internal.InternalApiConfig), not user auth. Keep ahead of any anyRequest().authenticated().
+                        .requestMatchers("/api/internal/**").permitAll()
+                        .anyRequest().permitAll());
         return http.build();
     }
 
